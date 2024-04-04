@@ -1,18 +1,18 @@
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+    - continue-on-error: true
+      uses: actions/checkout@v3
+    - continue-on-error: true
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.x
+    - continue-on-error: true
+      run: pip install mkdocs-material
+    - continue-on-error: true
+      run: mkdocs gh-deploy --force
 name: docs
 on:
-   push:
-      branches:
-         - master
-      paths:
-         - 'docs/**'
-
-jobs:
-   deploy:
-      runs-on: ubuntu-latest
-      steps:
-         -  uses: actions/checkout@v3
-         -  uses: actions/setup-python@v2
-            with:
-               python-version: 3.x
-         -  run: pip install mkdocs-material
-         -  run: mkdocs gh-deploy --force
+  repository_dispatch:
+    types: trigger-ga___docs.yml

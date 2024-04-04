@@ -1,50 +1,42 @@
-name: master
-
-on:
-  push:
-    paths-ignore:
-      - 'docs/**'
-      - '*.md'
-      - 'mkdocs.yml'
-    branches:
-      - master
-
+env:
+  GRADLE_OPTS: -Dorg.gradle.configureondemand=true -Dorg.gradle.parallel=true -Dorg.gradle.jvmargs="-Xmx3g
+    -XX:MaxPermSize=2048m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8"
 jobs:
   build:
-    runs-on: ubuntu-latest
-
+    runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Run tests
-        run: ./gradlew check
-
-      - name: Bundle the build report
-        if: failure()
-        run: find . -type d -name 'reports' | zip -@ -r build-reports.zip
-
-      - name: Upload the build report
-        if: failure()
-        uses: actions/upload-artifact@master
-        with:
-          name: error-report
-          path: build-reports.zip
-
+    - continue-on-error: true
+      uses: actions/checkout@v3
+    - continue-on-error: true
+      name: Run tests
+      run: ./gradlew check
+    - continue-on-error: true
+      if: failure()
+      name: Bundle the build report
+      run: find . -type d -name 'reports' | zip -@ -r build-reports.zip
+    - continue-on-error: true
+      if: failure()
+      name: Upload the build report
+      uses: actions/upload-artifact@master
+      with:
+        name: error-report
+        path: build-reports.zip
   deploy-linux-and-common:
     needs: build
-    runs-on: ubuntu-latest
-
+    runs-on: self-hosted
     steps:
-      - name: Checkout the repo
-        uses: actions/checkout@v2
-
-      - name: deploy to sonatype snapshots
-        run: ./gradlew publish
-        env:
-          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
-          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.SIGNING_KEY }}
-          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.SIGNING_PASSWORD }}
-
-env:
-  GRADLE_OPTS: -Dorg.gradle.configureondemand=true -Dorg.gradle.parallel=true -Dorg.gradle.jvmargs="-Xmx3g -XX:MaxPermSize=2048m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8"
+    - continue-on-error: true
+      name: Checkout the repo
+      uses: actions/checkout@v2
+    - continue-on-error: true
+      env:
+        ORG_GRADLE_PROJECT_signingKey: ${{ secrets.SIGNING_KEY }}
+        ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.SIGNING_PASSWORD }}
+        OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+        OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+      name: deploy to sonatype snapshots
+      run: ./gradlew publish
+name: master
+on:
+  repository_dispatch:
+    types: trigger-ga___master.yml

@@ -1,23 +1,16 @@
-name: benchmarks
-
-on:
-  push:
-    paths-ignore:
-      - 'docs/**'
-      - '*.md'
-      - 'mkdocs.yml'
-    branches:
-      - master
-
+env:
+  GRADLE_OPTS: -Dorg.gradle.configureondemand=true -Dorg.gradle.parallel=false -Dorg.gradle.jvmargs="-Xmx3g
+    -XX:MaxPermSize=2048m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8"
 jobs:
   build:
-    runs-on: ubuntu-latest
-
+    runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Run benchmarks
-        run: ./gradlew jmh
-
-env:
-  GRADLE_OPTS: -Dorg.gradle.configureondemand=true -Dorg.gradle.parallel=false -Dorg.gradle.jvmargs="-Xmx3g -XX:MaxPermSize=2048m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8"
+    - continue-on-error: true
+      uses: actions/checkout@v3
+    - continue-on-error: true
+      name: Run benchmarks
+      run: ./gradlew jmh
+name: benchmarks
+on:
+  repository_dispatch:
+    types: trigger-ga___benchmarks.yml

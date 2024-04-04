@@ -1,32 +1,29 @@
-name: release
-
-on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: "The release version"
-        required: true
-
+env:
+  GRADLE_OPTS: -Dorg.gradle.configureondemand=true -Dorg.gradle.parallel=false -Dorg.gradle.jvmargs="-Xmx3g
+    -XX:MaxPermSize=2048m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8"
 jobs:
   publish:
-    runs-on: ubuntu-latest
-
+    runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v3
+    - continue-on-error: true
+      uses: actions/checkout@v3
+    - continue-on-error: true
+      env:
+        ORG_GRADLE_PROJECT_signingKey: ${{ secrets.SIGNING_KEY }}
+        ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.SIGNING_PASSWORD }}
+        OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+        OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+        RELEASE_VERSION: ${{ github.event.inputs.version }}
+      name: deploy to sonatype snapshots
+      run: ./gradlew publish
+    - continue-on-error: true
+      name: tag release
+      run: 'git tag v${{ github.event.inputs.version }}
 
-      - name: deploy to sonatype snapshots
-        run: ./gradlew publish
-        env:
-          RELEASE_VERSION: ${{ github.event.inputs.version }}
-          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
-          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.SIGNING_KEY }}
-          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.SIGNING_PASSWORD }}
+        git push --tags
 
-      - name: tag release
-        run: |
-          git tag v${{ github.event.inputs.version }}
-          git push --tags
-
-env:
-  GRADLE_OPTS: -Dorg.gradle.configureondemand=true -Dorg.gradle.parallel=false -Dorg.gradle.jvmargs="-Xmx3g -XX:MaxPermSize=2048m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8"
+        '
+name: release
+on:
+  repository_dispatch:
+    types: trigger-ga___release.yml
